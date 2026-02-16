@@ -1,0 +1,45 @@
+{
+	"name": "deep-diff-patch",
+	"version": "0.0.0-development",
+	"description": "Compute a minimal JSON-serializable diff between objects and apply it as a patch",
+	"license": "MIT",
+	"repository": "mstuart/deep-diff-patch",
+	"funding": "https://github.com/sponsors/mstuart",
+	"author": {
+		"name": "Mark Stuart",
+		"email": "mstuart@users.noreply.github.com",
+		"url": "https://github.com/mstuart"
+	},
+	"type": "module",
+	"exports": {
+		"types": "./index.d.ts",
+		"default": "./index.js"
+	},
+	"sideEffects": false,
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"test": "xo && ava && tsd"
+	},
+	"files": [
+		"index.js",
+		"index.d.ts"
+	],
+	"keywords": [
+		"diff",
+		"patch",
+		"json",
+		"deep",
+		"compare",
+		"rfc6902",
+		"object",
+		"delta",
+		"merge"
+	],
+	"devDependencies": {
+		"ava": "^6.0.0",
+		"tsd": "^0.31.0",
+		"xo": "^0.60.0"
+	}
+}
