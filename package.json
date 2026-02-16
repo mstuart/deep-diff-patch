@@ -1,6 +1,6 @@
 {
 	"name": "deep-diff-patch",
-	"version": "0.0.0-development",
+	"version": "1.0.0",
 	"description": "Compute a minimal JSON-serializable diff between objects and apply it as a patch",
 	"license": "MIT",
 	"repository": "mstuart/deep-diff-patch",
