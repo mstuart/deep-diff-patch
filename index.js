@@ -18,9 +18,7 @@ export function diff(oldObject, newObject, basePath = '') {
 				operations.push({op: 'add', path, value: newObject[index]});
 			} else if (index >= newObject.length) {
 				operations.push({op: 'remove', path});
-			} else if (isObject(oldObject[index]) && isObject(newObject[index])) {
-				operations.push(...diff(oldObject[index], newObject[index], path));
-			} else if (Array.isArray(oldObject[index]) && Array.isArray(newObject[index])) {
+			} else if ((isObject(oldObject[index]) && isObject(newObject[index])) || (Array.isArray(oldObject[index]) && Array.isArray(newObject[index]))) {
 				operations.push(...diff(oldObject[index], newObject[index], path));
 			} else if (oldObject[index] !== newObject[index]) {
 				operations.push({op: 'replace', path, value: newObject[index]});
@@ -36,11 +34,9 @@ export function diff(oldObject, newObject, basePath = '') {
 	for (const key of newKeys) {
 		const path = `${basePath}/${escapeJsonPointer(key)}`;
 
-		if (!(key in oldObject)) {
+		if (!Object.hasOwn(oldObject, key)) {
 			operations.push({op: 'add', path, value: newObject[key]});
-		} else if (isObject(oldObject[key]) && isObject(newObject[key])) {
-			operations.push(...diff(oldObject[key], newObject[key], path));
-		} else if (Array.isArray(oldObject[key]) && Array.isArray(newObject[key])) {
+		} else if ((isObject(oldObject[key]) && isObject(newObject[key])) || (Array.isArray(oldObject[key]) && Array.isArray(newObject[key]))) {
 			operations.push(...diff(oldObject[key], newObject[key], path));
 		} else if (oldObject[key] !== newObject[key]) {
 			operations.push({op: 'replace', path, value: newObject[key]});
@@ -48,10 +44,12 @@ export function diff(oldObject, newObject, basePath = '') {
 	}
 
 	for (const key of oldKeys) {
-		if (!(key in newObject)) {
-			const path = `${basePath}/${escapeJsonPointer(key)}`;
-			operations.push({op: 'remove', path});
+		if (Object.hasOwn(newObject, key)) {
+			continue;
 		}
+
+		const path = `${basePath}/${escapeJsonPointer(key)}`;
+		operations.push({op: 'remove', path});
 	}
 
 	return operations;
@@ -71,6 +69,30 @@ function parsePointer(path) {
 	return path.split('/').filter(Boolean).map(segment => segment.replaceAll('~1', '/').replaceAll('~0', '~'));
 }
 
+function applyOperation(parent, key, operation) {
+	switch (operation.op) {
+		case 'add':
+		case 'replace': {
+			parent[key] = operation.value;
+			break;
+		}
+
+		case 'remove': {
+			if (Array.isArray(parent)) {
+				parent.splice(key, 1);
+			} else {
+				delete parent[key];
+			}
+
+			break;
+		}
+
+		default: {
+			break;
+		}
+	}
+}
+
 export function patch(object, operations) {
 	const result = structuredClone(object);
 
@@ -80,27 +102,7 @@ export function patch(object, operations) {
 		const parent = segments.length === 0 ? result : navigatePath(result, segments);
 		const key = Array.isArray(parent) ? Number(lastSegment) : lastSegment;
 
-		switch (operation.op) {
-			case 'add':
-			case 'replace': {
-				parent[key] = operation.value;
-				break;
-			}
-
-			case 'remove': {
-				if (Array.isArray(parent)) {
-					parent.splice(key, 1);
-				} else {
-					delete parent[key];
-				}
-
-				break;
-			}
-
-			default: {
-				break;
-			}
-		}
+		applyOperation(parent, key, operation);
 	}
 
 	return result;

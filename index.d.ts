@@ -19,7 +19,7 @@ export type Operation = {
 Compute a minimal diff between two objects.
 
 @param oldObject - The original object.
-@param newObject - The new object.
+@param newObject - The object to compare against `oldObject`.
 @param basePath - Base path prefix for JSON Pointer paths.
 @returns An array of JSON Patch operations.
 
