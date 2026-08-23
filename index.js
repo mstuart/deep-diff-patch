@@ -80,6 +80,12 @@ function navigatePath(object, segments) {
   let current = object;
   for (const segment of segments) {
     const key = Array.isArray(current) ? Number(segment) : segment;
+    if (!Object.hasOwn(current, key)) {
+      throw new TypeError(
+        `Cannot navigate through non-own property: ${segment}`
+      );
+    }
+
     current = current[key];
   }
 
@@ -97,7 +103,17 @@ function applyOperation(parent, key, operation) {
   switch (operation.op) {
     case "add":
     case "replace": {
-      parent[key] = operation.value;
+      if (key === "__proto__") {
+        Object.defineProperty(parent, key, {
+          configurable: true,
+          enumerable: true,
+          value: operation.value,
+          writable: true,
+        });
+      } else {
+        parent[key] = operation.value;
+      }
+
       break;
     }
 

@@ -185,6 +185,51 @@ test("patch does not mutate nested objects", (t) => {
   t.deepEqual(original, originalCopy);
 });
 
+// --- prototype pollution ---
+
+test("patch rejects constructor/prototype pollution paths", (t) => {
+  const property = "deepDiffPatchPolluted";
+  t.teardown(() => {
+    Reflect.deleteProperty(Object.prototype, property);
+  });
+
+  t.throws(
+    () =>
+      patch({}, [
+        {
+          op: "add",
+          path: `/constructor/prototype/${property}`,
+          value: "yes",
+        },
+      ]),
+    { instanceOf: TypeError }
+  );
+  t.false(Object.hasOwn(Object.prototype, property));
+});
+
+test("patch rejects __proto__ pollution paths", (t) => {
+  const property = "deepDiffPatchPolluted";
+  t.teardown(() => {
+    Reflect.deleteProperty(Object.prototype, property);
+  });
+
+  t.throws(
+    () =>
+      patch({}, [{ op: "add", path: `/__proto__/${property}`, value: "yes" }]),
+    { instanceOf: TypeError }
+  );
+  t.false(Object.hasOwn(Object.prototype, property));
+});
+
+test("patch adds __proto__ as an own data property", (t) => {
+  const value = { safe: true };
+  const result = patch({}, [{ op: "add", path: "/__proto__", value }]);
+
+  t.is(Object.getPrototypeOf(result), Object.prototype);
+  t.true(Object.hasOwn(result, "__proto__"));
+  t.is(Object.getOwnPropertyDescriptor(result, "__proto__")?.value, value);
+});
+
 // --- applyPatch alias ---
 
 test("applyPatch is an alias for patch", (t) => {
