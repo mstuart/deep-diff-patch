@@ -276,3 +276,16 @@ test("diff handles arrays with objects", (t) => {
     { op: "replace", path: "/items/0/name", value: "b" },
   ]);
 });
+
+test("diff/patch round-trips arrays that shrink by more than one element", (t) => {
+  const oldObject = { items: [1, 2, 3, 4, 5] };
+  const newObject = { items: [1, 2] };
+  const operations = diff(oldObject, newObject);
+  t.deepEqual(patch(oldObject, operations), newObject);
+});
+
+test("diff/patch round-trips a top-level array losing several trailing items", (t) => {
+  const oldArray = ["a", "b", "c", "d"];
+  const newArray = ["a"];
+  t.deepEqual(patch(oldArray, diff(oldArray, newArray)), newArray);
+});
