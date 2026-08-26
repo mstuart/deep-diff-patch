@@ -15,21 +15,34 @@ function canRecurse(oldValue, newValue) {
 
 function diffArrays(oldArray, newArray, basePath) {
   const operations = [];
-  const maxLength = Math.max(oldArray.length, newArray.length);
-  for (let index = 0; index < maxLength; index += 1) {
+  const sharedLength = Math.min(oldArray.length, newArray.length);
+
+  // Compare the overlapping prefix and append any new trailing elements.
+  for (let index = 0; index < newArray.length; index += 1) {
     const path = `${basePath}/${escapeJsonPointer(index)}`;
-    const oldValue = oldArray[index];
     const newValue = newArray[index];
 
     if (index >= oldArray.length) {
       operations.push({ op: "add", path, value: newValue });
-    } else if (index >= newArray.length) {
-      operations.push({ op: "remove", path });
-    } else if (canRecurse(oldValue, newValue)) {
+      continue;
+    }
+
+    const oldValue = oldArray[index];
+    if (canRecurse(oldValue, newValue)) {
       operations.push(...diff(oldValue, newValue, path));
     } else if (oldValue !== newValue) {
       operations.push({ op: "replace", path, value: newValue });
     }
+  }
+
+  // Remove trailing elements highest-index-first: each remove splices the
+  // array, so ascending order would shift later indices and drop the wrong
+  // elements. Descending order keeps every remaining index valid.
+  for (let index = oldArray.length - 1; index >= sharedLength; index -= 1) {
+    operations.push({
+      op: "remove",
+      path: `${basePath}/${escapeJsonPointer(index)}`,
+    });
   }
 
   return operations;
