@@ -260,6 +260,13 @@ test("patch with empty operations", (t) => {
   t.deepEqual(result, { a: 1 });
 });
 
+test("patch rejects unsupported operations instead of silently ignoring them", (t) => {
+  t.throws(() => patch({ a: 1 }, [{ op: "move", path: "/a" }]), {
+    instanceOf: TypeError,
+    message: "Unsupported patch operation: move",
+  });
+});
+
 test("diff handles mixed additions, removals, and replacements", (t) => {
   const oldObject = { a: 1, b: 2, c: 3 };
   const newObject = { a: 10, c: 3, d: 4 };
