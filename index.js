@@ -141,7 +141,7 @@ function applyOperation(parent, key, operation) {
     }
 
     default: {
-      break;
+      throw new TypeError(`Unsupported patch operation: ${operation.op}`);
     }
   }
 }
