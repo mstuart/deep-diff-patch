@@ -32,6 +32,12 @@ diff({a: 1}, {a: 2});
 ```
 */
 export function diff(
+  oldObject: readonly unknown[],
+  newObject: readonly unknown[],
+  basePath?: string
+): Operation[];
+
+export function diff(
   oldObject: Record<string, unknown>,
   newObject: Record<string, unknown>,
   basePath?: string
@@ -53,6 +59,11 @@ patch({a: 1}, [{op: 'replace', path: '/a', value: 2}]);
 ```
 */
 export function patch(
+  object: readonly unknown[],
+  operations: Operation[]
+): unknown[];
+
+export function patch(
   object: Record<string, unknown>,
   operations: Operation[]
 ): Record<string, unknown>;
@@ -64,6 +75,11 @@ Alias for `patch`.
 @param operations - The array of operations to apply.
 @returns A new patched object (input is not mutated).
 */
+export function applyPatch(
+  object: readonly unknown[],
+  operations: Operation[]
+): unknown[];
+
 export function applyPatch(
   object: Record<string, unknown>,
   operations: Operation[]

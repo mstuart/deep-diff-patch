@@ -1,6 +1,58 @@
 import test from "ava";
 import { applyPatch, diff, patch } from "./index.js";
 
+test("round-trips empty object keys without changing neighboring fields", (t) => {
+  const original = { "": { a: 1 }, a: 9 };
+  const updated = { "": { a: 2 }, a: 9 };
+  t.deepEqual(patch(original, diff(original, updated)), updated);
+  t.deepEqual(patch({ "": 1 }, [{ op: "replace", path: "/", value: 2 }]), {
+    "": 2,
+  });
+});
+
+test("array add inserts at the requested index and supports append", (t) => {
+  t.deepEqual(patch({ a: [1, 2] }, [{ op: "add", path: "/a/0", value: 0 }]), {
+    a: [0, 1, 2],
+  });
+  t.deepEqual(patch([1], [{ op: "add", path: "/-", value: 2 }]), [1, 2]);
+});
+
+test("rejects invalid array indices instead of removing another element", (t) => {
+  for (const segment of [
+    "not-an-index",
+    "-1",
+    "01",
+    "1.5",
+    "1e0",
+    "",
+    "2",
+    "-",
+  ]) {
+    const original = { a: [1, 2] };
+    t.throws(() => patch(original, [{ op: "remove", path: `/a/${segment}` }]), {
+      instanceOf: TypeError,
+    });
+    t.deepEqual(original, { a: [1, 2] });
+  }
+  t.throws(() => patch([1], [{ op: "add", path: "/2", value: 2 }]), {
+    instanceOf: TypeError,
+  });
+  t.throws(
+    () =>
+      patch({ a: [{ x: 1 }] }, [{ op: "replace", path: "/a/00/x", value: 2 }]),
+    { instanceOf: TypeError }
+  );
+});
+
+test("distinguishes the empty-key pointer from unsupported root pointers", (t) => {
+  t.throws(() => patch({}, [{ op: "add", path: "", value: 1 }]), {
+    instanceOf: TypeError,
+  });
+  t.throws(() => patch({}, [{ op: "add", path: "a", value: 1 }]), {
+    instanceOf: TypeError,
+  });
+});
+
 // --- diff: additions ---
 
 test("diff detects additions", (t) => {

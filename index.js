@@ -89,10 +89,27 @@ export function diff(oldObject, newObject, basePath = "") {
   return diffObjects(oldObject, newObject, basePath);
 }
 
+const arrayIndexPattern = /^(0|[1-9]\d*)$/;
+
+function arrayIndex(array, segment, allowAdd = false) {
+  if (allowAdd && segment === "-") {
+    return array.length;
+  }
+  const index = Number(segment);
+  const maximum = allowAdd ? array.length : array.length - 1;
+  if (
+    !(arrayIndexPattern.test(segment) && Number.isSafeInteger(index)) ||
+    index > maximum
+  ) {
+    throw new TypeError(`Invalid array index: ${segment}`);
+  }
+  return index;
+}
+
 function navigatePath(object, segments) {
   let current = object;
   for (const segment of segments) {
-    const key = Array.isArray(current) ? Number(segment) : segment;
+    const key = Array.isArray(current) ? arrayIndex(current, segment) : segment;
     if (!Object.hasOwn(current, key)) {
       throw new TypeError(
         `Cannot navigate through non-own property: ${segment}`
@@ -106,9 +123,12 @@ function navigatePath(object, segments) {
 }
 
 function parsePointer(path) {
+  if (!path.startsWith("/")) {
+    throw new TypeError("Expected a non-root JSON Pointer starting with '/'");
+  }
   return path
+    .slice(1)
     .split("/")
-    .filter(Boolean)
     .map((segment) => segment.replaceAll("~1", "/").replaceAll("~0", "~"));
 }
 
@@ -116,7 +136,9 @@ function applyOperation(parent, key, operation) {
   switch (operation.op) {
     case "add":
     case "replace": {
-      if (key === "__proto__") {
+      if (Array.isArray(parent) && operation.op === "add") {
+        parent.splice(key, 0, operation.value);
+      } else if (key === "__proto__") {
         Object.defineProperty(parent, key, {
           configurable: true,
           enumerable: true,
@@ -154,7 +176,9 @@ export function patch(object, operations) {
     const lastSegment = segments.pop();
     const parent =
       segments.length === 0 ? result : navigatePath(result, segments);
-    const key = Array.isArray(parent) ? Number(lastSegment) : lastSegment;
+    const key = Array.isArray(parent)
+      ? arrayIndex(parent, lastSegment, operation.op === "add")
+      : lastSegment;
 
     applyOperation(parent, key, operation);
   }
