@@ -14,3 +14,10 @@ expectType<Record<string, unknown>>(
 
 expectError(diff("not an object", {}));
 expectError(patch("not an object", []));
+
+expectType<Operation[]>(diff([1, 2], [1]));
+expectType<unknown[]>(patch([1, 2], [{ op: "remove", path: "/1" }]));
+expectType<unknown[]>(applyPatch([1], [{ op: "add", path: "/-", value: 2 }]));
+const readonlyArray = [1, 2] as const;
+expectType<Operation[]>(diff(readonlyArray, [1]));
+expectType<unknown[]>(patch(readonlyArray, []));

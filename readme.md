@@ -56,6 +56,10 @@ Recursively compares nested objects and arrays (by index).
 
 Applies an array of operations to a deep clone of `object` and returns the new object. The input is never mutated.
 
+Object keys may be empty strings: `/` identifies an empty key, and `//a` identifies `a` inside that key. Root operations with the empty pointer are not supported.
+
+An array `add` inserts at the specified index; `/-` appends. Array indices must be canonical non-negative integers within the operation's bounds. Invalid indices throw instead of changing another element. Both `diff` and `patch` support top-level arrays, including their TypeScript declarations.
+
 ### applyPatch(object, operations)
 
 Alias for `patch`.
