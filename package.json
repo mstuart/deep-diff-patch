@@ -44,5 +44,12 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "overrides": {
+    "supertap": {
+      "js-yaml": {
+        "argparse": "2.0.1"
+      }
+    }
   }
 }
