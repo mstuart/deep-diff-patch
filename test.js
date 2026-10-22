@@ -1,6 +1,33 @@
 import test from "ava";
 import { applyPatch, diff, patch } from "./index.js";
 
+test("patch values cannot mutate the input or the reusable patch", (t) => {
+  for (const op of ["add", "replace"]) {
+    const original = { nested: { value: 1 }, target: null };
+    const operations = [
+      { op, path: "/target", value: original.nested },
+      { op: "replace", path: "/target/value", value: 2 },
+    ];
+    const result = patch(original, operations);
+    t.is(result.target.value, 2);
+    t.is(original.nested.value, 1);
+    t.is(operations[0].value.value, 1);
+    result.target.value = 3;
+    t.is(operations[0].value.value, 1);
+  }
+});
+
+test("inserting a shared value twice creates independent copies", (t) => {
+  const value = { nested: 1 };
+  const result = patch({}, [
+    { op: "add", path: "/a", value },
+    { op: "replace", path: "/a/nested", value: 2 },
+    { op: "add", path: "/b", value },
+  ]);
+  t.deepEqual(result, { a: { nested: 2 }, b: { nested: 1 } });
+  t.deepEqual(value, { nested: 1 });
+});
+
 test("round-trips empty object keys without changing neighboring fields", (t) => {
   const original = { "": { a: 1 }, a: 9 };
   const updated = { "": { a: 2 }, a: 9 };
@@ -279,7 +306,10 @@ test("patch adds __proto__ as an own data property", (t) => {
 
   t.is(Object.getPrototypeOf(result), Object.prototype);
   t.true(Object.hasOwn(result, "__proto__"));
-  t.is(Object.getOwnPropertyDescriptor(result, "__proto__")?.value, value);
+  t.deepEqual(
+    Object.getOwnPropertyDescriptor(result, "__proto__")?.value,
+    value
+  );
 });
 
 // --- applyPatch alias ---

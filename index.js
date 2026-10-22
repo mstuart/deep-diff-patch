@@ -136,17 +136,18 @@ function applyOperation(parent, key, operation) {
   switch (operation.op) {
     case "add":
     case "replace": {
+      const value = structuredClone(operation.value);
       if (Array.isArray(parent) && operation.op === "add") {
-        parent.splice(key, 0, operation.value);
+        parent.splice(key, 0, value);
       } else if (key === "__proto__") {
         Object.defineProperty(parent, key, {
           configurable: true,
           enumerable: true,
-          value: operation.value,
+          value,
           writable: true,
         });
       } else {
-        parent[key] = operation.value;
+        parent[key] = value;
       }
 
       break;
