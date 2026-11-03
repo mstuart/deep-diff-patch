@@ -60,12 +60,12 @@ patch({a: 1}, [{op: 'replace', path: '/a', value: 2}]);
 */
 export function patch(
   object: readonly unknown[],
-  operations: Operation[]
+  operations: readonly Operation[]
 ): unknown[];
 
 export function patch(
   object: Record<string, unknown>,
-  operations: Operation[]
+  operations: readonly Operation[]
 ): Record<string, unknown>;
 
 /**
@@ -77,10 +77,10 @@ Alias for `patch`.
 */
 export function applyPatch(
   object: readonly unknown[],
-  operations: Operation[]
+  operations: readonly Operation[]
 ): unknown[];
 
 export function applyPatch(
   object: Record<string, unknown>,
-  operations: Operation[]
+  operations: readonly Operation[]
 ): Record<string, unknown>;
