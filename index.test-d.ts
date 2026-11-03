@@ -21,3 +21,9 @@ expectType<unknown[]>(applyPatch([1], [{ op: "add", path: "/-", value: 2 }]));
 const readonlyArray = [1, 2] as const;
 expectType<Operation[]>(diff(readonlyArray, [1]));
 expectType<unknown[]>(patch(readonlyArray, []));
+
+declare const readonlyOperations: readonly Operation[];
+expectType<Record<string, unknown>>(patch({}, readonlyOperations));
+expectType<unknown[]>(patch([], readonlyOperations));
+expectType<Record<string, unknown>>(applyPatch({}, readonlyOperations));
+expectType<unknown[]>(applyPatch([], readonlyOperations));

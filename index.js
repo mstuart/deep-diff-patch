@@ -90,6 +90,7 @@ export function diff(oldObject, newObject, basePath = "") {
 }
 
 const arrayIndexPattern = /^(0|[1-9]\d*)$/;
+const invalidPointerEscapePattern = /~(?:[^01]|$)/;
 
 function arrayIndex(array, segment, allowAdd = false) {
   if (allowAdd && segment === "-") {
@@ -125,6 +126,9 @@ function navigatePath(object, segments) {
 function parsePointer(path) {
   if (!path.startsWith("/")) {
     throw new TypeError("Expected a non-root JSON Pointer starting with '/'");
+  }
+  if (invalidPointerEscapePattern.test(path)) {
+    throw new TypeError("Invalid JSON Pointer escape");
   }
   return path
     .slice(1)
@@ -181,6 +185,12 @@ export function patch(object, operations) {
       ? arrayIndex(parent, lastSegment, operation.op === "add")
       : lastSegment;
 
+    if (
+      (operation.op === "replace" || operation.op === "remove") &&
+      !Object.hasOwn(parent, key)
+    ) {
+      throw new TypeError(`Patch target does not exist: ${operation.path}`);
+    }
     applyOperation(parent, key, operation);
   }
 
